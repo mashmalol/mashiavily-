@@ -58,10 +58,17 @@
             transform: translateY(-2px);
             border-color: #7c3aed;
         }
+
+        #matrixCanvas {
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Digital Rain Background -->
+    <canvas id="matrixCanvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-20"></canvas>
+    
+    <div class="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         <!-- Header -->
         <header class="mb-8 border-b border-gray-800 pb-6">
             <h1 class="text-4xl font-light mb-2">
