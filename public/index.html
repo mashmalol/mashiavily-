@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Observer - Smart Contract Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .code-block {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+
+        .vulnerability-critical { border-left: 4px solid #dc2626; }
+        .vulnerability-high { border-left: 4px solid #ea580c; }
+        .vulnerability-medium { border-left: 4px solid #f59e0b; }
+        .vulnerability-low { border-left: 4px solid #84cc16; }
+
+        .chat-message {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .example-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-2px);
+            border-color: #7c3aed;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <header class="mb-8 border-b border-gray-800 pb-6">
+            <h1 class="text-4xl font-light mb-2">
+                <span class="gradient-text">The Observer</span>
+            </h1>
+            <p class="text-gray-400 text-sm">
+                A discreet analyst of power dynamics within smart contracts.
+                <br>
+                <span class="text-gray-500 italic">Clarity over comfort. Structure over sentiment.</span>
+            </p>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Panel - Contract Input & Analysis -->
+            <div class="space-y-6">
+                <!-- Example Contracts -->
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <h2 class="text-xl font-medium mb-4 text-gray-200">Example Contracts</h2>
+                    <div class="space-y-3">
+                        <div class="example-card bg-gray-800 border border-gray-700 rounded p-4" onclick="loadExampleContract('tala-exploiter')">
+                            <h3 class="font-medium text-gray-200 mb-1">TALA Exploiter</h3>
+                            <p class="text-sm text-gray-400">Fee bypass exploit using mathematical rounding vulnerabilities</p>
+                            <span class="inline-block mt-2 text-xs px-2 py-1 rounded bg-red-600 text-white">CRITICAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Input -->
+                <div class="bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <h2 class="text-xl font-medium mb-4 text-gray-200">Contract Analysis</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Contract Address (optional)</label>
+                        <input 
+                            type="text" 
+                            id="contractAddress"
+                            placeholder="0x..."
+                            class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-2">Solidity Code</label>
+                        <textarea 
+                            id="contractCode"
+                            rows="12"
+                            placeholder="pragma solidity ^0.8.0;&#10;&#10;contract YourContract {&#10;    // Paste your contract code here&#10;}"
+                            class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 code-block focus:outline-none focus:border-purple-500 transition resize-none"
+                        ></textarea>
+                    </div>
+
+                    <button 
+                        id="analyzeBtn"
+                        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Analyze Contract
+                    </button>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="resultsContainer" class="hidden bg-gray-900 rounded-lg border border-gray-800 p-6">
+                    <h2 class="text-xl font-medium mb-4 text-gray-200">Analysis Results</h2>
+                    
+                    <!-- Scam Probability -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-gray-400">Scam Probability</span>
+                            <span id="scamProbability" class="text-2xl font-bold"></span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-3">
+                            <div id="scamBar" class="h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Vulnerabilities -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium mb-3 text-gray-300">Vulnerabilities</h3>
+                        <div id="vulnerabilitiesList" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Power Dynamics -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium mb-3 text-gray-300">Power Structure</h3>
+                        <div id="powerDynamics" class="space-y-4 text-sm"></div>
+                    </div>
+
+                    <!-- Observer's Insight -->
+                    <div class="border-t border-gray-800 pt-4">
+                        <h3 class="text-lg font-medium mb-2 text-gray-300">The Observer's Insight</h3>
+                        <p id="observerInsight" class="text-gray-400 italic leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Chat Interface -->
+            <div class="bg-gray-900 rounded-lg border border-gray-800 p-6 flex flex-col h-[calc(100vh-12rem)]">
+                <h2 class="text-xl font-medium mb-4 text-gray-200">Consult The Observer</h2>
+                
+                <!-- Chat Messages -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
+                    <div class="chat-message bg-gray-800 rounded-lg p-4 border border-gray-700">
+                        <p class="text-sm text-gray-400">
+                            Ask me about vulnerabilities, power structures, or the strategic implications of contract design.
+                            <br><br>
+                            I do not comfort. I clarify.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="border-t border-gray-800 pt-4">
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="chatInput"
+                            placeholder="Ask The Observer..."
+                            class="flex-1 bg-gray-800 border border-gray-700 rounded px-4 py-3 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        />
+                        <button 
+                            id="sendBtn"
+                            class="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-3 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
