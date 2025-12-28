@@ -2,6 +2,7 @@ import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { OBSERVER_SYSTEM_PROMPT, VulnerableContract } from '../config/observer-persona';
 import { VULNERABLE_CONTRACTS } from '../examples';
+import { BlockchainKnowledgeBase } from '../agents/blockchain-knowledge';
 
 /**
  * Core contract analysis service
@@ -42,16 +43,21 @@ export interface VulnerableContractMatch {
 }
 
 export class ContractAnalyzer {
-  private model: ChatAnthropic;
+  private model: ChatAnthropic | null = null;
+  private knowledgeBase: BlockchainKnowledgeBase;
 
-  constructor(apiKey: string) {
-    // Using Claude Sonnet for nuanced analysis
-    // The Observer requires sophisticated reasoning about power dynamics
-    this.model = new ChatAnthropic({
-      modelName: 'claude-sonnet-4-20250514',
-      anthropicApiKey: apiKey,
-      temperature: 0.3, // Lower temperature for precise, consistent analysis
-    });
+  constructor(apiKey?: string) {
+    // Initialize knowledge base immediately
+    this.knowledgeBase = new BlockchainKnowledgeBase();
+    
+    // Only initialize model if API key is provided
+    if (apiKey) {
+      this.model = new ChatAnthropic({
+        modelName: 'claude-sonnet-4-20250514',
+        anthropicApiKey: apiKey,
+        temperature: 0.3,
+      });
+    }
   }
 
   /**
@@ -161,10 +167,21 @@ Identify similar vulnerability patterns even if addresses don't match exactly.
    * Returns both technical vulnerabilities and structural power analysis
    */
   async analyzeContract(contractCode: string, contractAddress?: string): Promise<AnalysisResult> {
+    if (!this.model) {
+      throw new Error('API key not configured. Set ANTHROPIC_API_KEY in .env file.');
+    }
+
     // Check for interactions with known vulnerable contracts
     const knownVulnerableInteractions = this.checkVulnerableInteractions(contractCode);
     
-    const analysisPrompt = `Analyze this smart contract. Provide:
+    // Generate knowledge base context
+    const knowledgeContext = this.knowledgeBase.generateAnalysisContext(contractCode);
+    
+    const analysisPrompt = `Analyze this smart contract using the blockchain security knowledge base provided below.
+
+${knowledgeContext}
+
+Provide:
 
 1. Technical vulnerabilities (reentrancy, access control, arithmetic issues)
 2. Centralization points (admin keys, upgrade mechanisms, pause functions)
@@ -232,10 +249,19 @@ In your observerInsight, comment on any matches with the vulnerable contracts da
    * User can ask questions, The Observer responds with structural clarity
    */
   async chat(userMessage: string, contractContext?: string): Promise<string> {
+    if (!this.model) {
+      throw new Error('API key not configured. Set ANTHROPIC_API_KEY in .env file.');
+    }
+
     const vulnerableDbContext = this.formatVulnerableContractsContext();
     
+    // Generate knowledge context if contract is provided
+    const knowledgeContext = contractContext 
+      ? this.knowledgeBase.generateAnalysisContext(contractContext)
+      : '';
+    
     const contextualPrompt = contractContext
-      ? `${vulnerableDbContext}\n\nContext - analyzing contract:\n\`\`\`solidity\n${contractContext}\n\`\`\`\n\nUser question: ${userMessage}`
+      ? `${vulnerableDbContext}\n\n${knowledgeContext}\n\nContext - analyzing contract:\n\`\`\`solidity\n${contractContext}\n\`\`\`\n\nUser question: ${userMessage}`
       : `${vulnerableDbContext}\n\nUser question: ${userMessage}`;
 
     const messages = [
@@ -261,5 +287,12 @@ In your observerInsight, comment on any matches with the vulnerable contracts da
     return VULNERABLE_CONTRACTS.find(
       v => v.address.toLowerCase() === address.toLowerCase()
     );
+  }
+
+  /**
+   * Gets the blockchain knowledge base instance
+   */
+  getKnowledgeBase(): BlockchainKnowledgeBase {
+    return this.knowledgeBase;
   }
 }

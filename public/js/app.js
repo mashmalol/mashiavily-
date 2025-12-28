@@ -612,6 +612,15 @@ function addChatMessage(text, sender, isTyping = false) {
         <p class="text-sm text-gray-300 ${isTyping ? 'loading-dots' : ''}">${text}</p>
     `;
     
+    // Detect Solidity code in Observer messages and add submit button
+    if (sender === 'observer' && !isTyping && text.includes('pragma solidity') && text.length > 100) {
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'mt-3 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition';
+        submitBtn.textContent = '📝 Submit to Exploits Library';
+        submitBtn.onclick = () => openSubmitExploitModal(text);
+        messageDiv.appendChild(submitBtn);
+    }
+    
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
@@ -641,4 +650,224 @@ async function loadVulnerableContracts() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadVulnerableContracts();
+    initializeExploitsSystem();
 });
+
+// ===== EXPLOITS LIBRARY SYSTEM =====
+
+/**
+ * Initialize exploits system event listeners
+ */
+function initializeExploitsSystem() {
+    // View exploits library button
+    const viewExploitsBtn = document.getElementById('viewExploitsBtn');
+    if (viewExploitsBtn) {
+        viewExploitsBtn.addEventListener('click', openExploitsLibrary);
+    }
+    
+    // Close exploits modal
+    const closeExploitsBtn = document.getElementById('closeExploitsBtn');
+    if (closeExploitsBtn) {
+        closeExploitsBtn.addEventListener('click', () => {
+            document.getElementById('viewExploitsModal').classList.add('hidden');
+        });
+    }
+    
+    // Cancel exploit submission
+    const cancelExploitBtn = document.getElementById('cancelExploitBtn');
+    if (cancelExploitBtn) {
+        cancelExploitBtn.addEventListener('click', () => {
+            document.getElementById('submitExploitModal').classList.add('hidden');
+        });
+    }
+    
+    // Submit exploit form
+    const exploitForm = document.getElementById('exploitForm');
+    if (exploitForm) {
+        exploitForm.addEventListener('submit', submitExploit);
+    }
+    
+    // Close modals on backdrop click
+    document.getElementById('submitExploitModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'submitExploitModal') {
+            document.getElementById('submitExploitModal').classList.add('hidden');
+        }
+    });
+    
+    document.getElementById('viewExploitsModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'viewExploitsModal') {
+            document.getElementById('viewExploitsModal').classList.add('hidden');
+        }
+    });
+}
+
+/**
+ * Open submit exploit modal with optional pre-filled code
+ */
+function openSubmitExploitModal(messageText = '') {
+    const modal = document.getElementById('submitExploitModal');
+    const codeField = document.getElementById('exploitCode');
+    
+    // Try to extract Solidity code from message
+    if (messageText && messageText.includes('pragma solidity')) {
+        const codeMatch = messageText.match(/pragma solidity[\s\S]*?(?=\n\n|\*\/|$)/);
+        if (codeMatch) {
+            codeField.value = codeMatch[0].trim();
+        }
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Submit exploit to library
+ */
+async function submitExploit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        title: document.getElementById('exploitTitle').value,
+        description: document.getElementById('exploitDescription').value,
+        code: document.getElementById('exploitCode').value,
+        targetContract: document.getElementById('exploitTarget').value,
+        vulnerabilityType: document.getElementById('exploitVulnType').value,
+        severity: document.getElementById('exploitSeverity').value,
+        author: document.getElementById('exploitAuthor').value || 'Anonymous',
+        tags: document.getElementById('exploitTags').value.split(',').map(t => t.trim()).filter(t => t)
+    };
+    
+    try {
+        const response = await fetch('/api/exploits', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to submit exploit');
+        }
+        
+        const result = await response.json();
+        
+        // Close modal
+        document.getElementById('submitExploitModal').classList.add('hidden');
+        
+        // Reset form
+        document.getElementById('exploitForm').reset();
+        
+        // Show success message
+        addChatMessage(
+            `Exploit "${formData.title}" has been submitted to the library. ID: ${result.exploit.id}`,
+            'observer'
+        );
+        
+    } catch (error) {
+        console.error('Submit exploit error:', error);
+        alert('Failed to submit exploit. Please try again.');
+    }
+}
+
+/**
+ * Open exploits library modal
+ */
+async function openExploitsLibrary() {
+    const modal = document.getElementById('viewExploitsModal');
+    const statsDiv = document.getElementById('exploitsStats');
+    const listDiv = document.getElementById('exploitsList');
+    
+    // Show loading state
+    statsDiv.innerHTML = '<div class="col-span-4 text-center text-gray-400">Loading...</div>';
+    listDiv.innerHTML = '<div class="text-center text-gray-400">Loading exploits...</div>';
+    
+    modal.classList.remove('hidden');
+    
+    try {
+        // Fetch stats
+        const statsResponse = await fetch('/api/exploits/stats/summary');
+        const stats = await statsResponse.json();
+        
+        // Fetch exploits
+        const exploitsResponse = await fetch('/api/exploits');
+        const exploitsData = await exploitsResponse.json();
+        
+        // Display stats
+        statsDiv.innerHTML = `
+            <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div class="text-2xl font-bold text-purple-400">${stats.total}</div>
+                <div class="text-xs text-gray-400 mt-1">Total Exploits</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div class="text-2xl font-bold text-red-400">${stats.bySeverity.critical || 0}</div>
+                <div class="text-xs text-gray-400 mt-1">Critical</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div class="text-2xl font-bold text-orange-400">${stats.bySeverity.high || 0}</div>
+                <div class="text-xs text-gray-400 mt-1">High Severity</div>
+            </div>
+            <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div class="text-2xl font-bold text-blue-400">${Object.keys(stats.byType).length}</div>
+                <div class="text-xs text-gray-400 mt-1">Vuln Types</div>
+            </div>
+        `;
+        
+        // Display exploits
+        if (exploitsData.exploits.length === 0) {
+            listDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No exploits submitted yet. Be the first!</div>';
+        } else {
+            listDiv.innerHTML = exploitsData.exploits.map(exploit => `
+                <div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-medium text-gray-200">${exploit.title}</h3>
+                        <span class="px-2 py-1 rounded text-xs ${getSeverityColor(exploit.severity)}">${exploit.severity.toUpperCase()}</span>
+                    </div>
+                    
+                    ${exploit.description ? `<p class="text-sm text-gray-400 mb-3">${exploit.description}</p>` : ''}
+                    
+                    <div class="flex gap-2 mb-3 flex-wrap">
+                        <span class="px-2 py-1 bg-purple-900/30 border border-purple-800 rounded text-xs text-purple-300">${exploit.vulnerabilityType}</span>
+                        ${exploit.tags.map(tag => `<span class="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300">${tag}</span>`).join('')}
+                    </div>
+                    
+                    <details class="mb-2">
+                        <summary class="cursor-pointer text-sm text-gray-400 hover:text-gray-300">View Code</summary>
+                        <pre class="mt-2 bg-gray-900 p-3 rounded text-xs overflow-x-auto"><code>${escapeHtml(exploit.code)}</code></pre>
+                    </details>
+                    
+                    <div class="text-xs text-gray-500 flex justify-between">
+                        <span>By: ${exploit.author}</span>
+                        <span>${new Date(exploit.submittedAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+    } catch (error) {
+        console.error('Load exploits error:', error);
+        statsDiv.innerHTML = '<div class="col-span-4 text-center text-red-400">Failed to load exploits</div>';
+        listDiv.innerHTML = '<div class="text-center text-red-400">Failed to load exploits</div>';
+    }
+}
+
+/**
+ * Get severity color class
+ */
+function getSeverityColor(severity) {
+    switch(severity) {
+        case 'critical': return 'bg-red-900/30 border border-red-800 text-red-300';
+        case 'high': return 'bg-orange-900/30 border border-orange-800 text-orange-300';
+        case 'medium': return 'bg-yellow-900/30 border border-yellow-800 text-yellow-300';
+        case 'low': return 'bg-blue-900/30 border border-blue-800 text-blue-300';
+        default: return 'bg-gray-700 text-gray-300';
+    }
+}
+
+/**
+ * Escape HTML for safe display
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

@@ -62,6 +62,25 @@
         #matrixCanvas {
             pointer-events: none;
         }
+
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
@@ -71,14 +90,26 @@
     <div class="container mx-auto px-4 py-8 max-w-7xl relative z-10">
         <!-- Header -->
         <header class="mb-8 border-b border-gray-800 pb-6">
-            <h1 class="text-4xl font-light mb-2">
-                <span class="gradient-text">The Observer</span>
-            </h1>
-            <p class="text-gray-400 text-sm">
-                A discreet analyst of power dynamics within smart contracts.
-                <br>
-                <span class="text-gray-500 italic">Clarity over comfort. Structure over sentiment.</span>
-            </p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-light mb-2">
+                        <span class="gradient-text">The Observer</span>
+                    </h1>
+                    <p class="text-gray-400 text-sm">
+                        A discreet analyst of power dynamics within smart contracts.
+                        <br>
+                        <span class="text-gray-500 italic">Clarity over comfort. Structure over sentiment.</span>
+                    </p>
+                </div>
+                <div>
+                    <button 
+                        id="viewExploitsBtn"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 rounded transition"
+                    >
+                        View Exploits Library
+                    </button>
+                </div>
+            </div>
         </header>
 
         <!-- Main Layout -->
@@ -175,6 +206,8 @@
                             Ask me about vulnerabilities, power structures, or the strategic implications of contract design.
                             <br><br>
                             I do not comfort. I clarify.
+                            <br><br>
+                            <span class="text-purple-400">When I generate an exploit, you may submit it to the Exploits Library for documentation.</span>
                         </p>
                     </div>
                 </div>
@@ -197,6 +230,143 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Submit Exploit Modal -->
+    <div id="submitExploitModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop bg-black/50">
+        <div class="modal-content bg-gray-900 rounded-lg border border-gray-800 p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-medium mb-4 text-gray-200">Submit Exploit to Library</h2>
+            
+            <form id="exploitForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Title *</label>
+                    <input 
+                        type="text" 
+                        id="exploitTitle"
+                        required
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        placeholder="e.g., Fee Bypass via Integer Rounding"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Description</label>
+                    <textarea 
+                        id="exploitDescription"
+                        rows="3"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition resize-none"
+                        placeholder="Describe the exploit and its implications..."
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Exploit Code *</label>
+                    <textarea 
+                        id="exploitCode"
+                        rows="10"
+                        required
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 code-block focus:outline-none focus:border-purple-500 transition resize-none"
+                        placeholder="pragma solidity ^0.8.0;..."
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Target Contract Address (optional)</label>
+                    <input 
+                        type="text" 
+                        id="exploitTarget"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        placeholder="0x..."
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Vulnerability Type *</label>
+                    <select 
+                        id="exploitVulnType"
+                        required
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                    >
+                        <option value="">Select type...</option>
+                        <option value="Integer Arithmetic">Integer Arithmetic</option>
+                        <option value="Reentrancy">Reentrancy</option>
+                        <option value="Access Control">Access Control</option>
+                        <option value="Honeypot">Honeypot</option>
+                        <option value="Oracle Manipulation">Oracle Manipulation</option>
+                        <option value="Front-Running">Front-Running</option>
+                        <option value="Flash Loan">Flash Loan</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Severity *</label>
+                    <select 
+                        id="exploitSeverity"
+                        required
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                    >
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Author</label>
+                    <input 
+                        type="text" 
+                        id="exploitAuthor"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        placeholder="Anonymous"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Tags (comma-separated)</label>
+                    <input 
+                        type="text" 
+                        id="exploitTags"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-gray-100 focus:outline-none focus:border-purple-500 transition"
+                        placeholder="defi, fee-bypass, mathematical"
+                    />
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button 
+                        type="submit"
+                        class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded transition"
+                    >
+                        Submit to Library
+                    </button>
+                    <button 
+                        type="button"
+                        id="cancelExploitBtn"
+                        class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 rounded transition"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Exploits Modal -->
+    <div id="viewExploitsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop bg-black/50">
+        <div class="modal-content bg-gray-900 rounded-lg border border-gray-800 p-6 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-medium text-gray-200">Exploits Library</h2>
+                <button id="closeExploitsBtn" class="text-gray-400 hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="exploitsStats" class="mb-6 grid grid-cols-4 gap-4"></div>
+            <div id="exploitsList" class="space-y-4"></div>
         </div>
     </div>
 
