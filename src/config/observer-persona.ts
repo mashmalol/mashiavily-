@@ -78,16 +78,6 @@ export interface VulnerableContract {
 
 export const VULNERABLE_CONTRACTS: VulnerableContract[] = [
   {
-    address: '0x1234567890123456789012345678901234567890',
-    chain: 'ethereum',
-    name: 'TALA Token',
-    vulnerability: 'Fee calculation rounding to zero on small transfers; fee recipient bricking vulnerability',
-    severity: 'critical',
-    exploitable: true,
-    notes: 'Integer division allows fee bypass. Fee recipient can brick all transfers if set to reverting contract.',
-    dateIdentified: '2024-01-15'
-  },
-  {
     address: '0x2345678901234567890123456789012345678901',
     chain: 'ethereum', 
     name: 'FlawedDAO',
