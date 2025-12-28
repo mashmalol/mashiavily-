@@ -23,14 +23,21 @@ for (let i = 0; i < columns; i++) {
 
 // Draw matrix rain
 function drawMatrix() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Add glow effect
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#667eea';
     ctx.fillStyle = '#667eea';
-    ctx.font = fontSize + 'px monospace';
+    ctx.font = 'bold ' + fontSize + 'px monospace';
     
     for (let i = 0; i < drops.length; i++) {
         const text = chars[Math.floor(Math.random() * chars.length)];
+        
+        // Brightest characters at the head
+        const opacity = Math.min(1, (canvas.height - drops[i] * fontSize) / 100);
+        ctx.fillStyle = `rgba(102, 126, 234, ${opacity})`;
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
         
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
