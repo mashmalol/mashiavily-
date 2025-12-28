@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import analysisRouter from './routes/analysis';
 import chatRouter from './routes/chat';
+import examplesRouter from './routes/examples';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // API Routes
 app.use('/api/analysis', analysisRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/examples', examplesRouter);
 
 // Serve the main HTML file for the root route
 app.get('/', (req, res) => {

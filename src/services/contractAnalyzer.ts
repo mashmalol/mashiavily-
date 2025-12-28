@@ -1,6 +1,7 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { OBSERVER_SYSTEM_PROMPT, VULNERABLE_CONTRACTS, VulnerableContract } from '../config/observer-persona';
+import { OBSERVER_SYSTEM_PROMPT, VulnerableContract } from '../config/observer-persona';
+import { VULNERABLE_CONTRACTS } from '../examples';
 
 /**
  * Core contract analysis service

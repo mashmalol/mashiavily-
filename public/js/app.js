@@ -55,8 +55,19 @@ let currentContract = '';
 let isAnalyzing = false;
 let isChatting = false;
 
-// Example contracts database
-const EXAMPLE_CONTRACTS = {
+// Load example contracts from server
+let EXAMPLE_CONTRACTS = {};
+
+// Fetch examples on page load
+fetch('/api/examples')
+    .then(res => res.json())
+    .then(data => {
+        EXAMPLE_CONTRACTS = data.examples;
+    })
+    .catch(err => console.error('Failed to load examples:', err));
+
+// Fallback example contracts
+const FALLBACK_EXAMPLE = {
     'tala-exploiter': `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 

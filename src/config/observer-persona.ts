@@ -75,36 +75,3 @@ export interface VulnerableContract {
   notes: string;
   dateIdentified: string;
 }
-
-export const VULNERABLE_CONTRACTS: VulnerableContract[] = [
-  {
-    address: '0x2345678901234567890123456789012345678901',
-    chain: 'ethereum', 
-    name: 'FlawedDAO',
-    vulnerability: 'Reentrancy in withdrawal function; no access control on critical functions',
-    severity: 'critical',
-    exploitable: true,
-    notes: 'Classic DAO-style reentrancy. Admin functions callable by anyone.',
-    dateIdentified: '2024-02-20'
-  },
-  {
-    address: '0x3456789012345678901234567890123456789012',
-    chain: 'bsc',
-    name: 'HoneyPot Token',
-    vulnerability: 'Hidden transfer restrictions; only specific addresses can sell',
-    severity: 'high',
-    exploitable: false,
-    notes: 'Buy is open, sell is restricted. Designed to trap liquidity.',
-    dateIdentified: '2024-03-10'
-  },
-  {
-    address: '0x4567890123456789012345678901234567890123',
-    chain: 'ethereum',
-    name: 'RugPull NFT',
-    vulnerability: 'Centralized mint function with no cap; owner can drain treasury',
-    severity: 'high',
-    exploitable: true,
-    notes: 'Owner can mint unlimited NFTs and drain all ETH from contract.',
-    dateIdentified: '2024-04-05'
-  }
-];
